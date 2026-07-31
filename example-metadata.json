@@ -3,7 +3,7 @@
   "title": "Example C64 Game",
   "author": "Teletype Games",
   "desc": "Short description of the game.",
-  "site": "https://git.teletype.hu/games/example",
+  "site": "https://git.teletypegames.org/games/example",
   "license": "MIT",
   "version": "1.0.0"
 }

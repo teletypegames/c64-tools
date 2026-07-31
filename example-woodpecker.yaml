@@ -6,7 +6,7 @@ steps:
       - 'make ci-version'
 
   - name: build
-    image: git.teletype.hu/internal/c64-builder:latest
+    image: git.teletypegames.org/internal/c64-builder:latest
     commands:
       - 'make ci-build'
 
