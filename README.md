@@ -27,6 +27,19 @@ spirit as [tic80-tools](../tic80-tools).
    `droparea_ssh_password` / `update_secret_key` secrets in Woodpecker.
 4. Copy `example-tasks.json` to `.vscode/tasks.json`.
 
+## Builder image
+
+`builder.Dockerfile` bakes the pipeline's build-step dependencies
+(ACME assembler + make) into `git.teletype.hu/internal/c64-builder`,
+so the build step no longer runs `apt-get` on every run (VICE is a
+local-dev tool only and is not included):
+
+```sh
+docker build --platform linux/amd64 -f builder.Dockerfile \
+  -t git.teletype.hu/internal/c64-builder:latest .
+docker push git.teletype.hu/internal/c64-builder:latest
+```
+
 The pipeline uploads `$(PROJECT)-$(VERSION).prg` and
 `$(PROJECT)-$(VERSION).metadata.json` to the droparea, then triggers
 `/update?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
