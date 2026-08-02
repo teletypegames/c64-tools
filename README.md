@@ -13,7 +13,9 @@ spirit as [tic80-tools](../tic80-tools).
   `platform=c64`).
 - `example-metadata.json` — catalog metadata; the `version` field drives
   `ci-version`, the rest (`name`, `title`, `author`, `desc`, `site`,
-  `license`) is what `SoftwareUpdater::C64Service` writes into the DB.
+  `repo`, `license`) is what `SoftwareUpdater::C64Service` writes into
+  the DB (`site` becomes the "Source Code", `repo` the "Repository"
+  external link).
 - `example-tasks.json` — VS Code `.vscode/tasks.json` wrapping the local
   make targets.
 
