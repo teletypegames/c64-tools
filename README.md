@@ -8,8 +8,8 @@ spirit as [tic80-tools](../tic80-tools).
   Woodpecker pipeline targets (`ci-version`, `ci-build`, `ci-artifact`,
   `ci-update`).
 - `example-woodpecker.yaml` — Woodpecker pipeline: version → build
-  (Debian, `apt install acme`) → artifact (scp to the droparea) →
-  update (calls the teletypegames `/update` endpoint with
+  (Debian, `apt install acme`) → artifact (HTTP POST to `/build/upload`) →
+  update (calls the teletypegames `/build/publish` endpoint with
   `platform=c64`).
 - `example-metadata.json` — catalog metadata; the `version` field drives
   `ci-version`, the rest (`name`, `title`, `author`, `desc`, `site`,
@@ -26,7 +26,7 @@ spirit as [tic80-tools](../tic80-tools).
 2. Copy `example-metadata.json` to `metadata.json` and fill it in;
    `name` must match `PROJECT`.
 3. Copy `example-woodpecker.yaml` to `.woodpecker.yaml` and add the
-   `droparea_ssh_password` / `update_secret_key` secrets in Woodpecker.
+   `update_secret_key` secret in Woodpecker.
 4. Copy `example-tasks.json` to `.vscode/tasks.json`.
 
 ## Builder image
@@ -43,6 +43,6 @@ docker push git.teletypegames.org/internal/c64-builder:latest
 ```
 
 The pipeline uploads `$(PROJECT)-$(VERSION).prg` and
-`$(PROJECT)-$(VERSION).metadata.json` to the droparea, then triggers
-`/update?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
+`$(PROJECT)-$(VERSION).metadata.json` via `/build/upload`, then triggers
+`/build/publish?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
 creates/updates the Software row and a Release with `cartridge_path`.
