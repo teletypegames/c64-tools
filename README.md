@@ -6,10 +6,10 @@ spirit as [tic80-tools](../tic80-tools).
 - `example-makefile.make` — project Makefile: local dev targets
   (`deps`, `build`, `run`, `clear`, `rebuild`, `rebuildrun`) plus the
   Woodpecker pipeline targets (`ci-version`, `ci-build`, `ci-artifact`,
-  `ci-update`).
+  `ci-publish`).
 - `example-woodpecker.yaml` — Woodpecker pipeline: version → build
   (Debian, `apt install acme`) → artifact (HTTP POST to `/build/upload`) →
-  update (calls the teletypegames `/build/publish` endpoint with
+  publish (calls the teletypegames `/build/publish` endpoint with
   `platform=c64`).
 - `example-metadata.json` — catalog metadata; the `version` field drives
   `ci-version`, the rest (`name`, `title`, `author`, `desc`, `site`,
