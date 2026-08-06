@@ -10,7 +10,7 @@ spirit as [tic80-tools](../tic80-tools).
   configuration extension — preview it with
   `curl "https://teletypegames.org/build/config?platform=c64"`.
 - `example-metadata.json` — catalog metadata; the `version` field drives
-  `ci-version`, the rest (`name`, `title`, `author`, `desc`, `site`,
+  the pipeline's version step, the rest (`name`, `title`, `author`, `desc`, `site`,
   `repo`, `license`) is what `SoftwareUpdater::C64Service` writes into
   the DB (`site` becomes the "Source Code", `repo` the "Repository"
   external link).
