@@ -4,8 +4,8 @@
 #
 # Build & push (the CI runner is linux/amd64):
 #   docker build --platform linux/amd64 -f builder.Dockerfile \
-#     -t git.teletypegames.org/internal/c64-builder:latest .
-#   docker push git.teletypegames.org/internal/c64-builder:latest
+#     -t git.teletypegames.org/build/c64-builder:latest .
+#   docker push git.teletypegames.org/build/c64-builder:latest
 
 FROM debian:stable-slim
 
