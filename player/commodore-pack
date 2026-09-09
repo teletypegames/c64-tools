@@ -7,6 +7,10 @@
 #   <name>-<version>-linux-x64.zip       yapeSDL + libSDL2 + launcher
 #   <name>-<version>-win-x64.zip         yapeSDL.exe + SDL2.dll + launcher
 #   <name>-<version>-mac-universal.zip   yapeSDL.app + launcher
+#
+# <name> is the pipeline's name and only names the archives. Inside them the
+# launcher and the .prg carry the "name" from metadata.json, which is the name
+# the catalog registers the software under and the store clients look for.
 set -eu
 
 PLATFORM=${1:?platform}
@@ -25,10 +29,13 @@ case "$PLATFORM" in
 esac
 
 TITLE=""
+GAME=""
 if [ -f metadata.json ]; then
   TITLE=$(sed -n 's/.*"title"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' metadata.json | head -n 1)
+  GAME=$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' metadata.json | head -n 1)
 fi
 [ -n "$TITLE" ] || TITLE=$NAME
+[ -n "$GAME" ] || GAME=$NAME
 TITLE_HTML=$(printf '%s' "$TITLE" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g')
 TITLE_SED=$(printf '%s' "$TITLE_HTML" | sed -e 's/[&|\\]/\\&/g')
 
@@ -39,7 +46,7 @@ $TITLE ($MACHINE) version $VERSION
 Start the game with the launcher next to this file:
   $1
 
-The launcher sets yapeSDL to $MACHINE mode and autostarts $NAME.prg.
+The launcher sets yapeSDL to $MACHINE mode and autostarts $GAME.prg.
 
 Controls (yapeSDL):
   joystick        arrow keys + left SHIFT, or a gamepad
@@ -88,9 +95,9 @@ cp "$PLAYER_HOME/emulatorjs/compression/extract7z.js" "$WEB/data/compression/"
 cp "$PLAYER_HOME/emulatorjs/cores/$CORE_ID-wasm.data" \
    "$PLAYER_HOME/emulatorjs/cores/$CORE_ID-legacy-wasm.data" "$WEB/data/cores/"
 cp "$PLAYER_HOME/emulatorjs/cores/reports/$CORE_ID.json" "$WEB/data/cores/reports/"
-cp "$PRG" "$WEB/$NAME.prg"
+cp "$PRG" "$WEB/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$WEB/"
-sed -e "s|@NAME@|$NAME|g" -e "s|@CORE@|$CORE|g" -e "s|@TITLE@|$TITLE_SED|g" \
+sed -e "s|@NAME@|$GAME|g" -e "s|@CORE@|$CORE|g" -e "s|@TITLE@|$TITLE_SED|g" \
     "$PLAYER_HOME/index.html" > "$WEB/index.html"
 rm -f "$BASE.html.zip"
 (cd "$WEB" && zip -qr "../$BASE.html.zip" .)
@@ -102,7 +109,7 @@ DIR="$BASE-linux-x64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -r "$PLAYER_HOME/yapesdl/linux-x64/." "$DIR/"
-cp "$PRG" "$DIR/$NAME.prg"
+cp "$PRG" "$DIR/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 {
   printf '#!/bin/sh\nset -e\ncd "$(dirname "$0")"\n'
@@ -113,10 +120,10 @@ cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
   printf 'if ! ldconfig -p 2>/dev/null | grep -q "libSDL2-2\\.0\\.so\\.0"; then\n'
   printf '  export LD_LIBRARY_PATH="$PWD/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
   printf 'fi\n'
-  printf 'exec ./yapesdl "$PWD/%s.prg"\n' "$NAME"
-} > "$DIR/$NAME"
-chmod 0755 "$DIR/$NAME" "$DIR/yapesdl"
-readme "./$NAME" "The bundled libSDL2 is only used when the system has none." > "$DIR/README.txt"
+  printf 'exec ./yapesdl "$PWD/%s.prg"\n' "$GAME"
+} > "$DIR/$GAME"
+chmod 0755 "$DIR/$GAME" "$DIR/yapesdl"
+readme "./$GAME" "The bundled libSDL2 is only used when the system has none." > "$DIR/README.txt"
 pack_dir "$DIR"
 
 # ---------------------------------------------------------------- windows
@@ -124,11 +131,11 @@ DIR="$BASE-win-x64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -r "$PLAYER_HOME/yapesdl/win-x64/." "$DIR/"
-cp "$PRG" "$DIR/$NAME.prg"
+cp "$PRG" "$DIR/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 PS="\$d = Join-Path \$env:APPDATA 'Gaia\\yapeSDL'; New-Item -ItemType Directory -Force \$d | Out-Null; \$p = Join-Path \$d 'yape.conf'; \$lines = @('[Yape configuration file]'); if (Test-Path \$p) { \$lines = @(Get-Content \$p | Where-Object { \$_ -notmatch '^EmulationLevel' }) }; \$lines += 'EmulationLevel = $LEVEL'; Set-Content -Path \$p -Value \$lines"
-printf '@echo off\r\ncd /d "%%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "%s"\r\nstart "" "%%~dp0YapeSDL.exe" "%%~dp0%s.prg"\r\n' "$PS" "$NAME" > "$DIR/$NAME.bat"
-readme "$NAME.bat" "" | sed 's/$/\r/' > "$DIR/README.txt"
+printf '@echo off\r\ncd /d "%%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "%s"\r\nstart "" "%%~dp0YapeSDL.exe" "%%~dp0%s.prg"\r\n' "$PS" "$GAME" > "$DIR/$GAME.bat"
+readme "$GAME.bat" "" | sed 's/$/\r/' > "$DIR/README.txt"
 pack_dir "$DIR"
 
 # ---------------------------------------------------------------- mac
@@ -136,7 +143,7 @@ DIR="$BASE-mac-universal"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -R "$PLAYER_HOME/yapesdl/mac-universal/." "$DIR/"
-cp "$PRG" "$DIR/$NAME.prg"
+cp "$PRG" "$DIR/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 {
   printf '#!/bin/sh\nset -e\ncd "$(dirname "$0")"\n'
@@ -144,10 +151,10 @@ cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
   write_conf_sh
   printf '}\n'
   printf 'set_machine "$HOME/Library/Application Support/Gaia/yapeSDL"\n'
-  printf 'exec ./yapeSDL.app/Contents/MacOS/yapeSDL "$PWD/%s.prg"\n' "$NAME"
-} > "$DIR/$NAME.command"
-chmod 0755 "$DIR/$NAME.command"
-readme "$NAME.command (double-click, or run it from Terminal)" \
+  printf 'exec ./yapeSDL.app/Contents/MacOS/yapeSDL "$PWD/%s.prg"\n' "$GAME"
+} > "$DIR/$GAME.command"
+chmod 0755 "$DIR/$GAME.command"
+readme "$GAME.command (double-click, or run it from Terminal)" \
   "The app is not notarized: if macOS refuses to open it, right-click the launcher and choose Open, or run
   xattr -dr com.apple.quarantine .
 in this folder once." > "$DIR/README.txt"

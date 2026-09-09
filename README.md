@@ -61,14 +61,19 @@ as the `exporter` image):
 - **yapeSDL** (upstream release binaries: the Debian `.deb` plus a copy of
   `libSDL2`, the Windows `x64.zip`, the universal macOS `.app`) — the native
   players. yapeSDL has no command line switch for the machine type, so each
-  bundle ships a launcher (`<name>`, `<name>.bat`, `<name>.command`) that
+  bundle ships a launcher (`<game>`, `<game>.bat`, `<game>.command`) that
   writes `EmulationLevel` into the user's `yape.conf` (2 = C64, 0 = Plus/4)
-  and autostarts the `.prg`.
+  and autostarts `<game>.prg`. `<game>` is the `name` in `metadata.json`: the
+  catalog registers the software under it, and the store clients pick the
+  program named after the software, so the launcher has to carry that name
+  even when the pipeline's `<name>` (the repo slug or the marker's `name:`)
+  differs from it.
 
 `player/commodore-pack <c64|plus4> <name> <version>` is the entry point the
 pipeline calls; it expects `<name>-<version>.prg` (and `metadata.json` for
-the title) in the working directory and writes `<name>-<version>.html.zip`,
-`-linux-x64.zip`, `-win-x64.zip` and `-mac-universal.zip` next to it.
+the title and the game name) in the working directory and writes
+`<name>-<version>.html.zip`, `-linux-x64.zip`, `-win-x64.zip` and
+`-mac-universal.zip` next to it.
 `player/LICENSES.txt` goes into every bundle (yapeSDL and the VICE core are
 GPL-2, EmulatorJS is GPL-3).
 
