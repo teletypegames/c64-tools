@@ -6,7 +6,7 @@ spirit as [tic80-tools](../tic80-tools).
 - `example-makefile.make` — project Makefile: local dev targets
   (`deps`, `build`, `run`, `clear`, `rebuild`, `rebuildrun`).
 - `example-woodpecker.yaml` — a one-line marker (`platform: c64`): the
-  full pipeline (version → build → artifact → publish) is served by the update server's Woodpecker
+  full pipeline (version → build → package → artifact → publish) is served by the update server's Woodpecker
   configuration extension — preview it with
   `curl "https://teletypegames.org/build/config?platform=c64"`.
 - `example-metadata.json` — catalog metadata; the `version` field drives
@@ -43,7 +43,48 @@ docker build --platform linux/amd64 -f builder.Dockerfile \
 docker push git.teletypegames.org/build/c64-builder:latest
 ```
 
-The served pipeline uploads `$(PROJECT)-$(VERSION).prg` and
-`$(PROJECT)-$(VERSION).metadata.json` via `/build/upload`, then triggers
+## Player image
+
+`player.Dockerfile` bakes the emulators the pipeline's `package` step wraps
+around the built `.prg` into `git.teletypegames.org/build/commodore-player`,
+shared by the c64 and plus4 pipelines (the update server hands it to them
+as the `exporter` image):
+
+- **EmulatorJS** (`player/index.html` + the self-hosted `data/` folder with
+  the `vice_x64sc` and `vice_xplus4` libretro cores) — the browser player
+  behind the catalog's "Play in browser" button. Everything is served from
+  the release's own `/file/<name>-<version>/` folder with relative paths,
+  nothing is loaded from the EmulatorJS CDN.
+- **yapeSDL** (upstream release binaries: the Debian `.deb` plus a copy of
+  `libSDL2`, the Windows `x64.zip`, the universal macOS `.app`) — the native
+  players. yapeSDL has no command line switch for the machine type, so each
+  bundle ships a launcher (`<name>`, `<name>.bat`, `<name>.command`) that
+  writes `EmulationLevel` into the user's `yape.conf` (2 = C64, 0 = Plus/4)
+  and autostarts the `.prg`.
+
+`player/commodore-pack <c64|plus4> <name> <version>` is the entry point the
+pipeline calls; it expects `<name>-<version>.prg` (and `metadata.json` for
+the title) in the working directory and writes `<name>-<version>.html.zip`,
+`-linux-x64.zip`, `-win-x64.zip` and `-mac-universal.zip` next to it.
+`player/LICENSES.txt` goes into every bundle (yapeSDL and the VICE core are
+GPL-2, EmulatorJS is GPL-3).
+
+```sh
+docker build --platform linux/amd64 -f player.Dockerfile \
+  -t git.teletypegames.org/build/commodore-player:latest .
+docker push git.teletypegames.org/build/commodore-player:latest
+```
+
+Try it locally on a built project:
+
+```sh
+docker run --rm -v "$PWD:/workspace" git.teletypegames.org/build/commodore-player:latest \
+  commodore-pack c64 mygame 1.0.0
+```
+
+The served pipeline builds the `.prg`, runs `commodore-pack`, uploads
+`$(PROJECT)-$(VERSION).prg`, `.metadata.json`, `.html.zip`, `-linux-x64.zip`,
+`-win-x64.zip` and `-mac-universal.zip` via `/build/upload`, then triggers
 `/build/publish?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
-creates/updates the Software row and a Release with `cartridge_path`.
+creates/updates the Software row and a Release with the `cartridge`, `html`,
+`win_x64`, `linux_x64` and `mac_universal` assets.
