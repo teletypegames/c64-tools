@@ -54,7 +54,10 @@ as the `exporter` image):
   the `vice_x64sc` and `vice_xplus4` libretro cores) — the browser player
   behind the catalog's "Play in browser" button. Everything is served from
   the release's own `/file/<name>-<version>/` folder with relative paths,
-  nothing is loaded from the EmulatorJS CDN.
+  nothing is loaded from the EmulatorJS CDN. The keyboard goes straight to
+  the emulated machine (EmulatorJS's *Direct Keyboard Input* is on and no key
+  is mapped to the RetroPad), so a game reads real C64 / Plus/4 keys; a
+  gamepad still drives the joystick through the default RetroPad mapping.
 - **yapeSDL** (upstream release binaries: the Debian `.deb` plus a copy of
   `libSDL2`, the Windows `x64.zip`, the universal macOS `.app`) — the native
   players. yapeSDL has no command line switch for the machine type, so each
