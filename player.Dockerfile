@@ -1,6 +1,7 @@
 # Player image for C64 and Plus/4 projects: packages a built .prg as a
 # browser player (EmulatorJS + the VICE libretro core) and as native
-# linux/windows/mac bundles (yapeSDL). Shared by the c64 and plus4
+# linux/windows/mac bundles (yapeSDL; the mac app is cut down to its arm64
+# slice, Apple Silicon only). Shared by the c64 and plus4
 # pipelines; the update server hands it to them as the `exporter` image.
 #
 # Build & push (the CI runner is linux/amd64):
@@ -35,6 +36,9 @@ RUN set -eux; \
     done; \
     ls -la "$dest" "$dest/cores"
 
+COPY player/thin-arm64 /usr/local/bin/thin-arm64
+RUN chmod 0755 /usr/local/bin/thin-arm64
+
 RUN set -eux; \
     base="https://github.com/calmopyrin/yapesdl/releases/download/v${YAPESDL_VERSION}"; \
     dest="${PLAYER_HOME}/yapesdl"; \
@@ -47,7 +51,11 @@ RUN set -eux; \
     curl -fsSL "$base/yapeSDL_${YAPESDL_VERSION}_x64.zip" -o win.zip; \
     mkdir -p "$dest/win-x64"; unzip -q win.zip -d "$dest/win-x64"; \
     curl -fsSL "$base/yapeSDL_${YAPESDL_VERSION}_Mac.zip" -o mac.zip; \
-    mkdir -p "$dest/mac-universal"; unzip -q mac.zip -d "$dest/mac-universal"; \
+    mkdir -p "$dest/mac-arm64"; unzip -q mac.zip -d "$dest/mac-arm64"; \
+    find "$dest/mac-arm64" -type f \( -name yapeSDL -o -name SDL2 \) -exec thin-arm64 {} \; ; \
+    for f in $(find "$dest/mac-arm64" -type f \( -name yapeSDL -o -name SDL2 \)); do \
+      [ "$(od -An -tx1 -N4 "$f" | tr -d ' ')" = "cffaedfe" ] || { echo "$f is not a thin 64-bit Mach-O" >&2; exit 1; }; \
+    done; \
     cd /; rm -rf "$tmp"; \
     objdump -p "$dest/linux-x64/lib/libSDL2-2.0.so.0" | grep NEEDED; \
     find "$dest" -maxdepth 2 -ls

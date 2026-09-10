@@ -59,11 +59,13 @@ as the `exporter` image):
   is mapped to the RetroPad), so a game reads real C64 / Plus/4 keys; a
   gamepad still drives the joystick through the default RetroPad mapping.
 - **yapeSDL** (upstream release binaries: the Debian `.deb` plus a copy of
-  `libSDL2`, the Windows `x64.zip`, the universal macOS `.app`) — the native
-  players. yapeSDL has no command line switch for the machine type, so each
-  bundle ships a launcher (`<game>`, `<game>.bat`, `<game>.command`) that
-  writes `EmulationLevel` into the user's `yape.conf` (2 = C64, 0 = Plus/4)
-  and autostarts `<game>.prg`. `<game>` is the `name` in `metadata.json`: the
+  `libSDL2`, the Windows `x64.zip`, the macOS `.app` cut down to its arm64
+  slice with `player/thin-arm64`, so it runs on Apple Silicon only) — the
+  native players. yapeSDL has no command line switch for the machine type, so
+  each bundle ships a launcher (`<game>`, `<game>.bat`, `<game>.command`) that
+  writes `EmulationLevel` into the user's `yape.conf` (2 = C64, 0 = Plus/4),
+  turns the speed/frame counter off (`DisplayFrameRate = 0`) and autostarts
+  `<game>.prg`. `<game>` is the `name` in `metadata.json`: the
   catalog registers the software under it, and the store clients pick the
   program named after the software, so the launcher has to carry that name
   even when the pipeline's `<name>` (the repo slug or the marker's `name:`)
@@ -73,7 +75,7 @@ as the `exporter` image):
 pipeline calls; it expects `<name>-<version>.prg` (and `metadata.json` for
 the title and the game name) in the working directory and writes
 `<name>-<version>.html.zip`, `-linux-x64.zip`, `-win-x64.zip` and
-`-mac-universal.zip` next to it.
+`-mac-arm64.zip` next to it.
 `player/LICENSES.txt` goes into every bundle (yapeSDL and the VICE core are
 GPL-2, EmulatorJS is GPL-3).
 
@@ -92,7 +94,7 @@ docker run --rm -v "$PWD:/workspace" git.teletypegames.org/build/commodore-playe
 
 The served pipeline builds the `.prg`, runs `commodore-pack`, uploads
 `$(PROJECT)-$(VERSION).prg`, `.metadata.json`, `.html.zip`, `-linux-x64.zip`,
-`-win-x64.zip` and `-mac-universal.zip` via `/build/upload`, then triggers
+`-win-x64.zip` and `-mac-arm64.zip` via `/build/upload`, then triggers
 `/build/publish?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
 creates/updates the Software row and a Release with the `cartridge`, `html`,
-`win_x64`, `linux_x64` and `mac_universal` assets.
+`win_x64`, `linux_x64` and `mac_arm64` assets.

@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# thin-arm64 <mach-o>: replace a universal (fat) Mach-O file with its arm64
+# slice, byte for byte what `lipo -thin arm64` writes. A thin file is left as is.
+use strict;
+use warnings;
+
+my $file = shift or die "usage: thin-arm64 <file>\n";
+open(my $in, '<:raw', $file) or die "$file: $!\n";
+local $/;
+my $data = <$in>;
+close $in;
+
+my ($magic, $count) = unpack('N N', $data);
+if ($magic != 0xCAFEBABE) {
+  print "$file: not a fat binary, left as is\n";
+  exit 0;
+}
+for my $i (0 .. $count - 1) {
+  my ($cputype, undef, $offset, $size) = unpack('N N N N', substr($data, 8 + $i * 20, 16));
+  next unless $cputype == 0x0100000C;
+  open(my $out, '>:raw', "$file.tmp") or die "$file.tmp: $!\n";
+  print $out substr($data, $offset, $size);
+  close $out;
+  chmod((stat($file))[2] & 07777, "$file.tmp");
+  rename("$file.tmp", $file) or die "$file: $!\n";
+  print "$file: kept the arm64 slice ($size of ", length($data), " bytes)\n";
+  exit 0;
+}
+die "$file: no arm64 slice\n";

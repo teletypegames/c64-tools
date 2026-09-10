@@ -6,11 +6,15 @@
 #   <name>-<version>.html.zip            browser player (EmulatorJS + VICE core)
 #   <name>-<version>-linux-x64.zip       yapeSDL + libSDL2 + launcher
 #   <name>-<version>-win-x64.zip         yapeSDL.exe + SDL2.dll + launcher
-#   <name>-<version>-mac-universal.zip   yapeSDL.app + launcher
+#   <name>-<version>-mac-arm64.zip       yapeSDL.app (Apple Silicon) + launcher
 #
 # <name> is the pipeline's name and only names the archives. Inside them the
 # launcher and the .prg carry the "name" from metadata.json, which is the name
 # the catalog registers the software under and the store clients look for.
+#
+# The launchers rewrite yape.conf in the SDL pref folder before every start:
+# EmulationLevel picks the machine, DisplayFrameRate = 0 hides the speed and
+# frame counter yapeSDL otherwise draws in the top right corner.
 set -eu
 
 PLATFORM=${1:?platform}
@@ -46,7 +50,8 @@ $TITLE ($MACHINE) version $VERSION
 Start the game with the launcher next to this file:
   $1
 
-The launcher sets yapeSDL to $MACHINE mode and autostarts $GAME.prg.
+The launcher sets yapeSDL to $MACHINE mode, hides the frame counter and
+autostarts $GAME.prg.
 
 Controls (yapeSDL):
   joystick        arrow keys + left SHIFT, or a gamepad
@@ -54,6 +59,7 @@ Controls (yapeSDL):
   LALT + ENTER    toggle full screen
   LALT + 1..3     window size
   LALT + R        reset (SHIFT+F11 hard reset)
+  LALT + S        show or hide the speed/frame counter
   ESC             emulator menu
   F12             quit
 
@@ -68,11 +74,12 @@ conf_dir=$1
 conf="$conf_dir/yape.conf"
 mkdir -p "$conf_dir"
 if [ -f "$conf" ]; then
-  grep -v '^EmulationLevel' "$conf" > "$conf.tmp" || true
+  grep -v -e '^EmulationLevel' -e '^DisplayFrameRate' "$conf" > "$conf.tmp" || true
   mv "$conf.tmp" "$conf"
 else
   printf '[Yape configuration file]\n' > "$conf"
 fi
+printf 'DisplayFrameRate = 0\n' >> "$conf"
 SH
   printf 'printf '"'"'EmulationLevel = %s\\n'"'"' >> "$conf"\n' "$LEVEL"
 }
@@ -133,16 +140,16 @@ mkdir -p "$DIR"
 cp -r "$PLAYER_HOME/yapesdl/win-x64/." "$DIR/"
 cp "$PRG" "$DIR/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
-PS="\$d = Join-Path \$env:APPDATA 'Gaia\\yapeSDL'; New-Item -ItemType Directory -Force \$d | Out-Null; \$p = Join-Path \$d 'yape.conf'; \$lines = @('[Yape configuration file]'); if (Test-Path \$p) { \$lines = @(Get-Content \$p | Where-Object { \$_ -notmatch '^EmulationLevel' }) }; \$lines += 'EmulationLevel = $LEVEL'; Set-Content -Path \$p -Value \$lines"
+PS="\$d = Join-Path \$env:APPDATA 'Gaia\\yapeSDL'; New-Item -ItemType Directory -Force \$d | Out-Null; \$p = Join-Path \$d 'yape.conf'; \$lines = @('[Yape configuration file]'); if (Test-Path \$p) { \$lines = @(Get-Content \$p | Where-Object { \$_ -notmatch '^(EmulationLevel|DisplayFrameRate)' }) }; \$lines += 'EmulationLevel = $LEVEL'; \$lines += 'DisplayFrameRate = 0'; Set-Content -Path \$p -Value \$lines"
 printf '@echo off\r\ncd /d "%%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "%s"\r\nstart "" "%%~dp0YapeSDL.exe" "%%~dp0%s.prg"\r\n' "$PS" "$GAME" > "$DIR/$GAME.bat"
 readme "$GAME.bat" "" | sed 's/$/\r/' > "$DIR/README.txt"
 pack_dir "$DIR"
 
 # ---------------------------------------------------------------- mac
-DIR="$BASE-mac-universal"
+DIR="$BASE-mac-arm64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
-cp -R "$PLAYER_HOME/yapesdl/mac-universal/." "$DIR/"
+cp -R "$PLAYER_HOME/yapesdl/mac-arm64/." "$DIR/"
 cp "$PRG" "$DIR/$GAME.prg"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 {
@@ -155,9 +162,10 @@ cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 } > "$DIR/$GAME.command"
 chmod 0755 "$DIR/$GAME.command"
 readme "$GAME.command (double-click, or run it from Terminal)" \
-  "The app is not notarized: if macOS refuses to open it, right-click the launcher and choose Open, or run
+  "The app runs on Apple Silicon Macs only (arm64).
+The app is not notarized: if macOS refuses to open it, right-click the launcher and choose Open, or run
   xattr -dr com.apple.quarantine .
 in this folder once." > "$DIR/README.txt"
 pack_dir "$DIR"
 
-ls -lh "$BASE.html.zip" "$BASE-linux-x64.zip" "$BASE-win-x64.zip" "$BASE-mac-universal.zip"
+ls -lh "$BASE.html.zip" "$BASE-linux-x64.zip" "$BASE-win-x64.zip" "$BASE-mac-arm64.zip"
