@@ -33,7 +33,7 @@ spirit as [tic80-tools](../tic80-tools).
 ## Builder image
 
 `builder.Dockerfile` bakes the pipeline's build-step dependencies
-(ACME assembler + make) into `git.teletypegames.org/build/c64-builder`,
+(ACME assembler, cc65 + make) into `git.teletypegames.org/build/c64-builder`,
 so the build step no longer runs `apt-get` on every run (VICE is a
 local-dev tool only and is not included):
 

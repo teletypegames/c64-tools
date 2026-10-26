@@ -1,4 +1,4 @@
-# CI builder image for C64 projects: ACME assembler + make, so the
+# CI builder image for C64 projects: ACME assembler, cc65 + make, so the
 # pipeline's build step does not run apt-get on every run. The VICE
 # emulator is a local-dev tool only and is intentionally not included.
 #
@@ -10,7 +10,7 @@
 FROM debian:stable-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends make acme zip curl ca-certificates \
+ && apt-get install -y --no-install-recommends make acme cc65 zip curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
