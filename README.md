@@ -50,14 +50,6 @@ around the built `.prg` into `git.teletypegames.org/build/commodore-player`,
 shared by the c64 and plus4 pipelines (the update server hands it to them
 as the `exporter` image):
 
-- **EmulatorJS** (`player/index.html` + the self-hosted `data/` folder with
-  the `vice_x64sc` and `vice_xplus4` libretro cores) — the browser player
-  behind the catalog's "Play in browser" button. Everything is served from
-  the release's own `/file/<name>-<version>/` folder with relative paths,
-  nothing is loaded from the EmulatorJS CDN. The keyboard goes straight to
-  the emulated machine (EmulatorJS's *Direct Keyboard Input* is on and no key
-  is mapped to the RetroPad), so a game reads real C64 / Plus/4 keys; a
-  gamepad still drives the joystick through the default RetroPad mapping.
 - **yapeSDL** (upstream release binaries: the Debian `.deb` plus a copy of
   `libSDL2`, the Windows `x64.zip`, the macOS `.app` cut down to its arm64
   slice with `player/thin-arm64`, so it runs on Apple Silicon only) — the
@@ -74,10 +66,12 @@ as the `exporter` image):
 `player/commodore-pack <c64|plus4> <name> <version>` is the entry point the
 pipeline calls; it expects `<name>-<version>.prg` (and `metadata.json` for
 the title and the game name) in the working directory and writes
-`<name>-<version>.html.zip`, `-linux-x64.zip`, `-win-x64.zip` and
-`-mac-arm64.zip` next to it.
-`player/LICENSES.txt` goes into every bundle (yapeSDL and the VICE core are
-GPL-2, EmulatorJS is GPL-3).
+`<name>-<version>-linux-x64.zip`, `-win-x64.zip` and `-mac-arm64.zip` next to it.
+`player/LICENSES.txt` goes into every bundle (yapeSDL is GPL-2).
+
+The browser player is not built here: on the web a C64 or Plus/4 release plays
+in the update server's EmulatorJS runtime (WarpEngine 3.1+, `/play/<name>/<version>`),
+which keeps EmulatorJS and the VICE cores once for every release.
 
 ```sh
 docker build --platform linux/amd64 -f player.Dockerfile \
@@ -93,8 +87,9 @@ docker run --rm -v "$PWD:/workspace" git.teletypegames.org/build/commodore-playe
 ```
 
 The served pipeline builds the `.prg`, runs `commodore-pack`, uploads
-`$(PROJECT)-$(VERSION).prg`, `.metadata.json`, `.html.zip`, `-linux-x64.zip`,
+`$(PROJECT)-$(VERSION).prg`, `.metadata.json`, `-linux-x64.zip`,
 `-win-x64.zip` and `-mac-arm64.zip` via `/build/upload`, then triggers
 `/build/publish?platform=c64&name=$(PROJECT)&version=$(VERSION)`, which
-creates/updates the Software row and a Release with the `cartridge`, `html`,
-`win_x64`, `linux_x64` and `mac_arm64` assets.
+creates/updates the Software row and a Release with the `cartridge`,
+`win_x64`, `linux_x64` and `mac_arm64` assets; the release plays in the browser
+from its `cartridge`.

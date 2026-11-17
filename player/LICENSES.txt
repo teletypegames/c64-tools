@@ -8,13 +8,4 @@ yapeSDL (native players: linux-x64, win-x64, mac-universal)
   Source: https://github.com/calmopyrin/yapesdl
   Also bundles SDL2 (zlib license), https://www.libsdl.org/
 
-EmulatorJS (browser player)
-  Copyright (C) Ethan O'Brien. GNU General Public License v3.
-  Source: https://github.com/EmulatorJS/EmulatorJS
-
-VICE libretro core (browser player, vice_x64sc / vice_xplus4)
-  The VICE team. GNU General Public License v2.
-  Source: https://github.com/libretro/vice-libretro
-  VICE: https://vice-emu.sourceforge.io/
-
 The emulators include the Commodore system ROMs they need to run.

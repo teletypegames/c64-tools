@@ -1,7 +1,7 @@
-# Player image for C64 and Plus/4 projects: packages a built .prg as a
-# browser player (EmulatorJS + the VICE libretro core) and as native
+# Player image for C64 and Plus/4 projects: packages a built .prg as native
 # linux/windows/mac bundles (yapeSDL; the mac app is cut down to its arm64
-# slice, Apple Silicon only). Shared by the c64 and plus4
+# slice, Apple Silicon only). On the web a release plays in the update
+# server's EmulatorJS runtime, so the image builds no browser player. Shared by the c64 and plus4
 # pipelines; the update server hands it to them as the `exporter` image.
 #
 # Build & push (the CI runner is linux/amd64):
@@ -11,30 +11,14 @@
 
 FROM debian:stable-slim
 
-ARG EMULATORJS_VERSION=4.2.3
 ARG YAPESDL_VERSION=0.81.1
 
 ENV PLAYER_HOME=/opt/commodore-player \
-    EMULATORJS_VERSION=${EMULATORJS_VERSION} \
     YAPESDL_VERSION=${YAPESDL_VERSION}
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates zip unzip binutils zstd libsdl2-2.0-0 \
  && rm -rf /var/lib/apt/lists/*
-
-RUN set -eux; \
-    base="https://cdn.emulatorjs.org/${EMULATORJS_VERSION}/data"; \
-    dest="${PLAYER_HOME}/emulatorjs"; \
-    mkdir -p "$dest/compression" "$dest/cores/reports"; \
-    for f in loader.js emulator.min.js emulator.min.css version.json compression/extract7z.js; do \
-      curl -fsSL "$base/$f" -o "$dest/$f"; \
-    done; \
-    for core in vice_x64sc vice_xplus4; do \
-      curl -fsSL "$base/cores/${core}-wasm.data" -o "$dest/cores/${core}-wasm.data"; \
-      curl -fsSL "$base/cores/${core}-legacy-wasm.data" -o "$dest/cores/${core}-legacy-wasm.data"; \
-      curl -fsSL "$base/cores/reports/${core}.json" -o "$dest/cores/reports/${core}.json"; \
-    done; \
-    ls -la "$dest" "$dest/cores"
 
 COPY player/thin-arm64 /usr/local/bin/thin-arm64
 RUN chmod 0755 /usr/local/bin/thin-arm64
@@ -60,7 +44,7 @@ RUN set -eux; \
     objdump -p "$dest/linux-x64/lib/libSDL2-2.0.so.0" | grep NEEDED; \
     find "$dest" -maxdepth 2 -ls
 
-COPY player/index.html player/LICENSES.txt ${PLAYER_HOME}/
+COPY player/LICENSES.txt ${PLAYER_HOME}/
 COPY player/commodore-pack /usr/local/bin/commodore-pack
 RUN chmod 0755 /usr/local/bin/commodore-pack
 

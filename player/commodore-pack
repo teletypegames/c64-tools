@@ -3,7 +3,6 @@
 #
 # Expects <name>-<version>.prg (and optionally metadata.json) in the working
 # directory and produces, next to it:
-#   <name>-<version>.html.zip            browser player (EmulatorJS + VICE core)
 #   <name>-<version>-linux-x64.zip       yapeSDL + libSDL2 + launcher
 #   <name>-<version>-win-x64.zip         yapeSDL.exe + SDL2.dll + launcher
 #   <name>-<version>-mac-arm64.zip       yapeSDL.app (Apple Silicon) + launcher
@@ -27,8 +26,8 @@ BASE="$NAME-$VERSION"
 [ -f "$PRG" ] || { echo "commodore-pack: $PRG not found" >&2; exit 1; }
 
 case "$PLATFORM" in
-  c64)   CORE=c64;   CORE_ID=vice_x64sc;  LEVEL=2; MACHINE="Commodore 64" ;;
-  plus4) CORE=plus4; CORE_ID=vice_xplus4; LEVEL=0; MACHINE="Commodore Plus/4" ;;
+  c64)   LEVEL=2; MACHINE="Commodore 64" ;;
+  plus4) LEVEL=0; MACHINE="Commodore Plus/4" ;;
   *) echo "commodore-pack: unsupported platform '$PLATFORM'" >&2; exit 1 ;;
 esac
 
@@ -40,8 +39,6 @@ if [ -f metadata.json ]; then
 fi
 [ -n "$TITLE" ] || TITLE=$NAME
 [ -n "$GAME" ] || GAME=$NAME
-TITLE_HTML=$(printf '%s' "$TITLE" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g')
-TITLE_SED=$(printf '%s' "$TITLE_HTML" | sed -e 's/[&|\\]/\\&/g')
 
 readme() {
   cat <<TXT
@@ -90,26 +87,6 @@ pack_dir() {
   rm -rf "$1"
   echo "==> $1.zip"
 }
-
-# ---------------------------------------------------------------- web
-WEB="$BASE-web"
-rm -rf "$WEB"
-mkdir -p "$WEB/data/cores/reports" "$WEB/data/compression"
-for f in loader.js emulator.min.js emulator.min.css version.json; do
-  cp "$PLAYER_HOME/emulatorjs/$f" "$WEB/data/$f"
-done
-cp "$PLAYER_HOME/emulatorjs/compression/extract7z.js" "$WEB/data/compression/"
-cp "$PLAYER_HOME/emulatorjs/cores/$CORE_ID-wasm.data" \
-   "$PLAYER_HOME/emulatorjs/cores/$CORE_ID-legacy-wasm.data" "$WEB/data/cores/"
-cp "$PLAYER_HOME/emulatorjs/cores/reports/$CORE_ID.json" "$WEB/data/cores/reports/"
-cp "$PRG" "$WEB/$GAME.prg"
-cp "$PLAYER_HOME/LICENSES.txt" "$WEB/"
-sed -e "s|@NAME@|$GAME|g" -e "s|@CORE@|$CORE|g" -e "s|@TITLE@|$TITLE_SED|g" \
-    "$PLAYER_HOME/index.html" > "$WEB/index.html"
-rm -f "$BASE.html.zip"
-(cd "$WEB" && zip -qr "../$BASE.html.zip" .)
-rm -rf "$WEB"
-echo "==> $BASE.html.zip"
 
 # ---------------------------------------------------------------- linux
 DIR="$BASE-linux-x64"
@@ -168,4 +145,4 @@ The app is not notarized: if macOS refuses to open it, right-click the launcher 
 in this folder once." > "$DIR/README.txt"
 pack_dir "$DIR"
 
-ls -lh "$BASE.html.zip" "$BASE-linux-x64.zip" "$BASE-win-x64.zip" "$BASE-mac-arm64.zip"
+ls -lh "$BASE-linux-x64.zip" "$BASE-win-x64.zip" "$BASE-mac-arm64.zip"
