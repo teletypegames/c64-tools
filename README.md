@@ -14,12 +14,21 @@ spirit as [tic80-tools](../tic80-tools).
   `repo`, `license`) is what `SoftwareUpdater::C64Service` writes into
   the DB (`site` becomes the "Source Code", `repo` the "Repository"
   external link).
-- `example-tasks.json` — VS Code `.vscode/tasks.json` wrapping the local
-  make targets.
+- `example-tasks.json` — VS Code `.vscode/tasks.json`: the make targets as
+  `warpengine` tasks (`build`, `clear`, `rebuild`, and `run (VICE)`, which
+  runs the build in a local VICE — it does not run in the dev container).
+- `example-devcontainer.json`, `example-devcontainer.Dockerfile` — the dev
+  container a new project gets (`.devcontainer/`): the builder image below
+  plus git and a `dev` user, so a computer with Docker only builds with the
+  same toolchain as the pipeline. `example-devcontainer-tasks.json` holds the
+  tasks merged into `.vscode/tasks.json` with it: `dev image` (builds the
+  container image) and `play` (builds and plays the game in the host's
+  EmulatorJS runtime).
 - `hello/main.asm` — a Hello World: clears the screen and prints `HELLO WORLD`.
 - `warp-template.json` — what *WarpEngine: New Game* in the WarpEngine Toolbox
   copies from this repo: the Makefile, the VS Code tasks and `hello/main.asm` as
-  `main.asm`, so a new project builds (`make build`, or the served pipeline's
+  `main.asm`, and under its `devcontainer` key the dev container (its files
+  filled with `{title}` and `{builderImage}`, its tasks merged), so a new project builds (`make build`, or the served pipeline's
   `acme -f cbm -o <name>.prg main.asm`) and runs (`make run`, x64sc) right away.
   The toolbox writes the marker, `metadata.json` and `README.md` itself.
 
@@ -35,18 +44,21 @@ spirit as [tic80-tools](../tic80-tools).
    `application_token` secret in Woodpecker (an ApplicationToken with
    the `update` + `upload` scopes, created in the admin).
 4. Copy `example-tasks.json` to `.vscode/tasks.json`.
+5. For the dev container run *WarpEngine: Add Dev Container* in the WarpEngine
+   Toolbox: it adds `.devcontainer/` and merges the tasks, keeping yours.
 
 ## Builder image
 
 `builder.Dockerfile` bakes the pipeline's build-step dependencies
 (ACME assembler, cc65 + make) into `git.teletypegames.org/build/c64-builder`,
 so the build step no longer runs `apt-get` on every run (VICE is a
-local-dev tool only and is not included):
+local-dev tool only and is not included). It is the base of the dev
+container too, so it is built for amd64 (the CI runner) and arm64 (Apple
+Silicon); both get the same Debian packages:
 
 ```sh
-docker build --platform linux/amd64 -f builder.Dockerfile \
-  -t git.teletypegames.org/build/c64-builder:latest .
-docker push git.teletypegames.org/build/c64-builder:latest
+docker buildx build --platform linux/amd64,linux/arm64 -f builder.Dockerfile \
+  -t git.teletypegames.org/build/c64-builder:latest --push .
 ```
 
 ## Player image
