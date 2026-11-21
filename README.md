@@ -45,7 +45,10 @@ spirit as [tic80-tools](../tic80-tools).
    the `update` + `upload` scopes, created in the admin).
 4. Copy `example-tasks.json` to `.vscode/tasks.json`.
 5. For the dev container run *WarpEngine: Add Dev Container* in the WarpEngine
-   Toolbox: it adds `.devcontainer/` and merges the tasks, keeping yours.
+   Toolbox: it adds `.devcontainer/` and merges the tasks, keeping yours. The
+   container editor gets its extensions from `example-devcontainer.json`: the
+   WarpEngine Toolbox, Makefile Tools (its configure prompts off; the Toolbox
+   tasks build) and the ACME cross-assembler extension.
 
 ## Builder image
 
