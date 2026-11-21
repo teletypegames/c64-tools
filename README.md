@@ -48,7 +48,7 @@ spirit as [tic80-tools](../tic80-tools).
    Toolbox: it adds `.devcontainer/` and merges the tasks, keeping yours. The
    container editor gets its extensions from `example-devcontainer.json`: the
    WarpEngine Toolbox, Makefile Tools (its configure prompts off; the Toolbox
-   tasks build) and the ACME cross-assembler extension.
+   tasks build) and the ACME cross-assembler extension. It also mounts the computer's Docker socket, with the Docker CLI in the image and `dev` in the socket's group, so the Toolbox lists, starts and restarts the local engine's containers from inside the container.
 
 ## Builder image
 
