@@ -1,4 +1,5 @@
-# CI builder image for C64 projects: ACME assembler, cc65, Oscar64 + make, so
+# CI builder image for C64 projects: ACME assembler, cc65, Oscar64, cc1541 (writes
+# the .d64 of a disk release) + make, so
 # the pipeline's build step does not run apt-get on every run. The VICE
 # emulator is a local-dev tool only and is intentionally not included.
 #
@@ -38,7 +39,7 @@ RUN curl -fsSL "https://github.com/drmortalwombat/oscar64/archive/${OSCAR64_COMM
 FROM debian:stable-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends make acme cc65 zip curl ca-certificates \
+ && apt-get install -y --no-install-recommends make acme cc65 cc1541 zip curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=oscar64 /out /usr/local/share/oscar64

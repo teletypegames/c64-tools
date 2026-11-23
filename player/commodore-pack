@@ -1,14 +1,14 @@
 #!/bin/sh
 # commodore-pack <c64|plus4> <name> <version>
 #
-# Expects <name>-<version>.prg (and optionally metadata.json) in the working
-# directory and produces, next to it:
+# Expects <name>-<version>.prg, or a disk image <name>-<version>.d64 (and
+# optionally metadata.json) in the working directory and produces, next to it:
 #   <name>-<version>-linux-x64.zip       yapeSDL + libSDL2 + launcher
 #   <name>-<version>-win-x64.zip         yapeSDL.exe + SDL2.dll + launcher
 #   <name>-<version>-mac-arm64.zip       yapeSDL.app (Apple Silicon) + launcher
 #
 # <name> is the pipeline's name and only names the archives. Inside them the
-# launcher and the .prg carry the "name" from metadata.json, which is the name
+# launcher and the .prg (or .d64) carry the "name" from metadata.json, which is the name
 # the catalog registers the software under and the store clients look for.
 #
 # The launchers rewrite yape.conf in the SDL pref folder before every start:
@@ -20,10 +20,12 @@ PLATFORM=${1:?platform}
 NAME=${2:?name}
 VERSION=${3:?version}
 PLAYER_HOME=${PLAYER_HOME:-/opt/commodore-player}
-PRG="$NAME-$VERSION.prg"
 BASE="$NAME-$VERSION"
-
-[ -f "$PRG" ] || { echo "commodore-pack: $PRG not found" >&2; exit 1; }
+PROGRAM=""
+for ext in .prg .d64; do
+  if [ -z "$PROGRAM" ] && [ -f "$BASE$ext" ]; then PROGRAM="$BASE$ext"; EXT=$ext; fi
+done
+[ -n "$PROGRAM" ] || { echo "commodore-pack: neither $BASE.prg nor $BASE.d64 found" >&2; exit 1; }
 
 case "$PLATFORM" in
   c64)   LEVEL=2; MACHINE="Commodore 64" ;;
@@ -48,7 +50,7 @@ Start the game with the launcher next to this file:
   $1
 
 The launcher sets yapeSDL to $MACHINE mode, hides the frame counter and
-autostarts $GAME.prg.
+autostarts $GAME$EXT.
 
 Controls (yapeSDL):
   joystick        arrow keys + left SHIFT, or a gamepad
@@ -93,7 +95,7 @@ DIR="$BASE-linux-x64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -r "$PLAYER_HOME/yapesdl/linux-x64/." "$DIR/"
-cp "$PRG" "$DIR/$GAME.prg"
+cp "$PROGRAM" "$DIR/$GAME$EXT"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 {
   printf '#!/bin/sh\nset -e\ncd "$(dirname "$0")"\n'
@@ -104,7 +106,7 @@ cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
   printf 'if ! ldconfig -p 2>/dev/null | grep -q "libSDL2-2\\.0\\.so\\.0"; then\n'
   printf '  export LD_LIBRARY_PATH="$PWD/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
   printf 'fi\n'
-  printf 'exec ./yapesdl "$PWD/%s.prg"\n' "$GAME"
+  printf 'exec ./yapesdl "$PWD/%s%s"\n' "$GAME" "$EXT"
 } > "$DIR/$GAME"
 chmod 0755 "$DIR/$GAME" "$DIR/yapesdl"
 readme "./$GAME" "The bundled libSDL2 is only used when the system has none." > "$DIR/README.txt"
@@ -115,10 +117,10 @@ DIR="$BASE-win-x64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -r "$PLAYER_HOME/yapesdl/win-x64/." "$DIR/"
-cp "$PRG" "$DIR/$GAME.prg"
+cp "$PROGRAM" "$DIR/$GAME$EXT"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 PS="\$d = Join-Path \$env:APPDATA 'Gaia\\yapeSDL'; New-Item -ItemType Directory -Force \$d | Out-Null; \$p = Join-Path \$d 'yape.conf'; \$lines = @('[Yape configuration file]'); if (Test-Path \$p) { \$lines = @(Get-Content \$p | Where-Object { \$_ -notmatch '^(EmulationLevel|DisplayFrameRate)' }) }; \$lines += 'EmulationLevel = $LEVEL'; \$lines += 'DisplayFrameRate = 0'; Set-Content -Path \$p -Value \$lines"
-printf '@echo off\r\ncd /d "%%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "%s"\r\nstart "" "%%~dp0YapeSDL.exe" "%%~dp0%s.prg"\r\n' "$PS" "$GAME" > "$DIR/$GAME.bat"
+printf '@echo off\r\ncd /d "%%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -Command "%s"\r\nstart "" "%%~dp0YapeSDL.exe" "%%~dp0%s%s"\r\n' "$PS" "$GAME" "$EXT" > "$DIR/$GAME.bat"
 readme "$GAME.bat" "" | sed 's/$/\r/' > "$DIR/README.txt"
 pack_dir "$DIR"
 
@@ -127,7 +129,7 @@ DIR="$BASE-mac-arm64"
 rm -rf "$DIR"
 mkdir -p "$DIR"
 cp -R "$PLAYER_HOME/yapesdl/mac-arm64/." "$DIR/"
-cp "$PRG" "$DIR/$GAME.prg"
+cp "$PROGRAM" "$DIR/$GAME$EXT"
 cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
 {
   printf '#!/bin/sh\nset -e\ncd "$(dirname "$0")"\n'
@@ -135,7 +137,7 @@ cp "$PLAYER_HOME/LICENSES.txt" "$DIR/"
   write_conf_sh
   printf '}\n'
   printf 'set_machine "$HOME/Library/Application Support/Gaia/yapeSDL"\n'
-  printf 'exec ./yapeSDL.app/Contents/MacOS/yapeSDL "$PWD/%s.prg"\n' "$GAME"
+  printf 'exec ./yapeSDL.app/Contents/MacOS/yapeSDL "$PWD/%s%s"\n' "$GAME" "$EXT"
 } > "$DIR/$GAME.command"
 chmod 0755 "$DIR/$GAME.command"
 readme "$GAME.command (double-click, or run it from Terminal)" \

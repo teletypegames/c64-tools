@@ -85,10 +85,31 @@ as the `exporter` image):
   differs from it.
 
 `player/commodore-pack <c64|plus4> <name> <version>` is the entry point the
-pipeline calls; it expects `<name>-<version>.prg` (and `metadata.json` for
+pipeline calls; it expects `<name>-<version>.prg` or a disk image
+`<name>-<version>.d64` (and `metadata.json` for
 the title and the game name) in the working directory and writes
 `<name>-<version>-linux-x64.zip`, `-win-x64.zip` and `-mac-arm64.zip` next to it.
-`player/LICENSES.txt` goes into every bundle (yapeSDL is GPL-2).
+`player/LICENSES.txt` goes into every bundle (yapeSDL is GPL-2). A `.d64` is
+copied as `<game>.d64` and the launcher hands it to yapeSDL, which mounts it in
+its 1541 and autostarts the first program.
+
+## Disk releases
+
+A program too big for one PRG ships on a disk: the marker says `media: d64`
+(WarpEngine 5.8+), the build step runs `make <name>.d64`, and the `.d64` is the
+release's cartridge in place of the PRG. The builder image carries `cc1541`
+for the Makefile to write the image with (or `oscar64 -d64=`):
+
+```make
+$(PROJECT).d64: $(PROJECT).prg data.bin
+	cc1541 -n "MY GAME" -i "TT" -f "MYGAME" -w $(PROJECT).prg -f "DATA" -w data.bin $@
+```
+
+```yaml
+platform: c64
+build: make
+media: d64
+```
 
 The browser player is not built here: on the web a C64 or Plus/4 release plays
 in the update server's EmulatorJS runtime (WarpEngine 3.1+, `/play/<name>/<version>`),

@@ -1,4 +1,4 @@
-# Player image for C64 and Plus/4 projects: packages a built .prg as native
+# Player image for C64 and Plus/4 projects: packages a built .prg (or .d64) as native
 # linux/windows/mac bundles (yapeSDL; the mac app is cut down to its arm64
 # slice, Apple Silicon only). On the web a release plays in the update
 # server's EmulatorJS runtime, so the image builds no browser player. Shared by the c64 and plus4
