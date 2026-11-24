@@ -1,6 +1,8 @@
 # CI builder image for C64 projects: ACME assembler, cc65, Oscar64, cc1541 (writes
 # the .d64 of a disk release) + make, so
-# the pipeline's build step does not run apt-get on every run. The VICE
+# the pipeline's build step does not run apt-get on every run. The tools' own
+# checks (`make check`, WarpEngine's shared check step) find gcc, python3 and a
+# pinned clang-format 18.1.8 (the DOSLIB style) here too. The VICE
 # emulator is a local-dev tool only and is intentionally not included.
 #
 # It is also the base of a project's dev container (.devcontainer/Dockerfile),
@@ -38,9 +40,15 @@ RUN curl -fsSL "https://github.com/drmortalwombat/oscar64/archive/${OSCAR64_COMM
 
 FROM debian:stable-slim
 
+ARG CLANG_FORMAT_VERSION=18.1.8
+
 RUN apt-get update \
  && apt-get install -y --no-install-recommends make acme cc65 cc1541 zip curl ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+      gcc libc6-dev python3 python3-venv \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m venv /opt/clang-format \
+ && /opt/clang-format/bin/pip install -q --no-cache-dir "clang-format==${CLANG_FORMAT_VERSION}" \
+ && ln -s /opt/clang-format/bin/clang-format /usr/local/bin/clang-format
 
 COPY --from=oscar64 /out /usr/local/share/oscar64
 RUN printf '#!/bin/sh\nexec /usr/local/share/oscar64/bin/oscar64 "$@"\n' > /usr/local/bin/oscar64 \
