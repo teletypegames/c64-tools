@@ -4,7 +4,7 @@ CI/CD templates for Commodore 64 (ACME + VICE) game projects, in the same
 spirit as [tic80-tools](../tic80-tools).
 
 - `example-makefile.make` — project Makefile: local dev targets
-  (`deps`, `build`, `run`, `clear`, `rebuild`, `rebuildrun`).
+  (`deps`, `build`, `run`, `clean`, `rebuild`, `rebuildrun`).
 - `example-woodpecker.yaml` — a one-line marker (`platform: c64`): the
   full pipeline (version → build → package → artifact → publish) is served by the update server's Woodpecker
   configuration extension — preview it with
@@ -15,7 +15,7 @@ spirit as [tic80-tools](../tic80-tools).
   the DB (`site` becomes the "Source Code", `repo` the "Repository"
   external link).
 - `example-tasks.json` — VS Code `.vscode/tasks.json`: the make targets as
-  `warpengine` tasks (`build`, `clear`, `rebuild`, and `run (VICE)`, which
+  `warpengine` tasks (`build`, `clean`, `rebuild`, and `run (VICE)`, which
   runs the build in a local VICE — it does not run in the dev container).
 - `example-devcontainer.json`, `example-devcontainer.Dockerfile` — the dev
   container a new project gets (`.devcontainer/`): the builder image below
