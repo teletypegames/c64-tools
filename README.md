@@ -3,13 +3,14 @@
 CI/CD templates for Commodore 64 (ACME + VICE) game projects, in the same
 spirit as [tic80-tools](../tic80-tools).
 
-- `example-makefile.make` — project Makefile: local dev targets
-  (`deps`, `build`, `run`, `clean`, `rebuild`, `rebuildrun`).
-- `example-woodpecker.yaml` — a one-line marker (`platform: c64`): the
-  full pipeline (version → build → package → artifact → publish) is served by the update server's Woodpecker
+- `example-makefile.make` — project Makefile: the shared targets
+  (`build`, `run`, `check`, `clean`, see below) plus `deps`, `rebuild`,
+  `rebuildrun`.
+- `.woodpecker.yaml` (written by New Game, not kept here) — a one-line
+  marker (`platform: c64`): the full pipeline (version → build → package → artifact → publish) is served by the update server's Woodpecker
   configuration extension — preview it with
   `curl "https://teletypegames.org/build/config?platform=c64"`.
-- `example-metadata.json` — catalog metadata; the `version` field drives
+- `metadata.json` (written by New Game, not kept here) — catalog metadata; the `version` field drives
   the pipeline's version step, the rest (`name`, `title`, `author`, `desc`, `site`,
   `repo`, `license`) is what `SoftwareUpdater::C64Service` writes into
   the DB (`site` becomes the "Source Code", `repo` the "Repository"
@@ -32,13 +33,21 @@ spirit as [tic80-tools](../tic80-tools).
   `acme -f cbm -o <name>.prg main.asm`) and runs (`make run`, x64sc) right away.
   The toolbox writes the marker, `metadata.json` and `README.md` itself.
 
+## Makefile contract
+
+The Makefile has the targets every WarpEngine template shares: `build`, `run`, `check` (the CI's check step runs it in the builder image),
+`clean`. `warp-engine check makefile` of the
+[WarpEngine CLI](https://wiki.teletypegames.org/godoc/warp-engine-cli/latest/cmd/warp-engine/)
+checks a project against it. `check` assembles the program; the web version is the
+`.prg` in the host's EmulatorJS runtime, so there is no `web` target.
+
 ## Usage in a game repo
 
 1. Copy `example-makefile.make` to `Makefile`, set `PROJECT` (and
    `TARGET` if the .prg name differs from `$(PROJECT).prg`).
-2. Copy `example-metadata.json` to `metadata.json` and fill it in;
+2. Create `metadata.json` (the keys above) and fill it in;
    `name` must match `PROJECT`.
-3. Copy `example-woodpecker.yaml` to `.woodpecker.yaml` (a one-line marker — the
+3. Create `.woodpecker.yaml` with the line `platform: c64` (a one-line marker — the
    pipeline itself is served by the update server; add `name:` when the
    software name differs from the repo name) and add the
    `application_token` secret in Woodpecker (an ApplicationToken with
